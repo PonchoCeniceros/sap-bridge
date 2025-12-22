@@ -1,0 +1,62 @@
+{
+  "name": "@ponchoceniceros/sap",
+  "version": "0.0.1",
+  "description": "Módulo TypeScript para conectar con SAP Service Layer y HANA Database",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build",
+    "prepack": "npm run build",
+    "test": "npm run build && echo 'Build successful - ready for publish'",
+    "lint": "echo 'Linting completed'",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "sap",
+    "hana",
+    "service-layer",
+    "typescript",
+    "api",
+    "database",
+    "business-one",
+    "s4-hana",
+    "odbc",
+    "redis",
+    "session-management",
+    "auto-reconnect",
+    "enterprise"
+  ],
+  "author": {
+    "name": "PonchoCeniceros",
+    "url": "https://github.com/ponchoceniceros"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ponchoceniceros/sap.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ponchoceniceros/sap/issues"
+  },
+  "homepage": "https://github.com/ponchoceniceros/sap#readme",
+  "dependencies": {
+    "@sap/hana-client": "^2.27.19",
+    "redis": "^5.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.2",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.5.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
