@@ -41,6 +41,7 @@ export function SessionHandler(credentials: SapCredentials, options?: SessionHan
      *
      */
     async login(): Promise<ApiResponse<void>> {
+      process.env.NODE_NO_WARNINGS = '1';
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
       try {
@@ -94,6 +95,7 @@ export function SessionHandler(credentials: SapCredentials, options?: SessionHan
 
       } finally {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
+        process.env.NODE_NO_WARNINGS = '0';
       }
     },
 

@@ -27,7 +27,7 @@ export class JsonFileSessionAdapter implements SessionStorageAdapter {
 
       return session;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Error desconocido en la sesión";
+      const message = error instanceof Error ? error.message : "Unknown session error";
       if (this.isDebug) {
         console.log(`[JSON] Archivo de sesión no encontrado ó sesión inválida: ${message}`);
       }
@@ -54,11 +54,11 @@ export class JsonFileSessionAdapter implements SessionStorageAdapter {
         console.log(`[JSON] Sesión almacenada: ${session.id}`);
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Error desconocido en la sesión";
+      const message = error instanceof Error ? error.message : "Unknown session error";
       if (this.isDebug) {
         console.error(`[JSON] Error al almacenar la sesión: ${message}`);
       }
-      throw new Error(`Error en el almacenamiento JSON: ${message}`);
+      throw new Error(`JSON saving session error: ${message}`);
     }
   }
 
@@ -73,13 +73,13 @@ export class JsonFileSessionAdapter implements SessionStorageAdapter {
         console.log(`[JSON] Sesión eliminada`);
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Error desconocido en la sesión";
+      const message = error instanceof Error ? error.message : "Unknown session error";
       // No lanzar error si el archivo no existe (ya está limpio)
       if (!message.includes('ENOENT')) {
         if (this.isDebug) {
           console.error(`[JSON] Error al eliminar la sesión: ${message}`);
         }
-        throw new Error(`Error al eliminar sesión en JSON: ${message}`);
+        throw new Error(`JSON cleaning session error: ${message}`);
       }
     }
   }

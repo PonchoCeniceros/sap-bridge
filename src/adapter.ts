@@ -18,6 +18,8 @@ export function SapApi(): SapAPI {
           mssg: 'Session is required for API calls'
         };
       }
+
+      process.env.NODE_NO_WARNINGS = '1';
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
       try {
@@ -77,6 +79,7 @@ export function SapApi(): SapAPI {
 
       } finally {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
+        process.env.NODE_NO_WARNINGS = '0';
       }
     },
 
@@ -90,6 +93,8 @@ export function SapApi(): SapAPI {
           mssg: 'Session is required for API calls'
         };
       }
+
+      process.env.NODE_NO_WARNINGS = '1';
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
       try {
@@ -149,6 +154,7 @@ export function SapApi(): SapAPI {
 
       } finally {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
+        process.env.NODE_NO_WARNINGS = '0';
       }
     },
 
@@ -164,6 +170,8 @@ export function SapApi(): SapAPI {
           mssg: 'Session is required for API calls'
         };
       }
+
+      process.env.NODE_NO_WARNINGS = '1';
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
       try {
@@ -224,6 +232,7 @@ export function SapApi(): SapAPI {
 
       } finally {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
+        process.env.NODE_NO_WARNINGS = '0';
       }
     },
 
