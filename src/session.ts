@@ -1,47 +1,34 @@
 import { createClient } from "redis";
 import { handleResponse } from "./utils.js";
-import { SapCredentials, SapSessionHandler, SapSession, HanaParams, ApiResponse } from './types.js';
-
-/**
- * Opciones de configuración para logs
- */
-interface ColorOptions {
-  RED?: string;
-  GREEN?: string;
-  BLUE?: string;
-  CIAN?: string;
-}
+import type {
+  SapCredentials,
+  SapSessionHandler,
+  SapSession,
+  HanaParams,
+  ApiResponse
+} from './types.js';
 
 /**
  * Opciones para configurar el SessionHandler
  */
 export interface SessionHandlerOptions {
-  colors?: ColorOptions;
   debug?: boolean;
 }
-
-const defaultColors: ColorOptions = {
-  RED: '\x1b[31m',
-  GREEN: '\x1b[32m',
-  BLUE: '\x1b[34m',
-  CIAN: '\x1b[36m'
-};
 
 /**
  *
  */
 export function SessionHandler(credentials: SapCredentials, options?: SessionHandlerOptions): SapSessionHandler {
-  const logColors = options?.colors || defaultColors;
   const isDebug = options?.debug ?? (process.env.SAP_DEBUG === 'true' || process.env.NODE_ENV === 'development');
 
   /**
    * Helper para logging condicional
    */
   const log = {
-    cian: (message: string) => { if (isDebug) console.log(logColors.CIAN, message); },
-    green: (message: string) => { if (isDebug) console.log(logColors.GREEN, message); },
-    blue: (message: string) => { if (isDebug) console.log(logColors.BLUE, message); },
-    red: (message: string) => { if (isDebug) console.log(logColors.RED, message); }
+    cyan: (message: string) => { if (isDebug) console.log(`\x1b[36m${message}`); },
+    green: (message: string) => { if (isDebug) console.log(`\x1b[32m${message}`); },
+    blue: (message: string) => { if (isDebug) console.log(`\x1b[34m${message}`); },
+    red: (message: string) => { if (isDebug) console.log(`\x1b[31m${message}`); }
   };
 
   return {
@@ -56,7 +43,7 @@ export function SessionHandler(credentials: SapCredentials, options?: SessionHan
 
         const prevSession = await this.getSession();
         if (prevSession) {
-          log.cian(`[📁] sesion previa existente: ${prevSession.id}`);
+          log.cyan(`[📁] sesion previa existente: ${prevSession.id}`);
           return {
             isOk: true,
             mssg: 'Login successful.'

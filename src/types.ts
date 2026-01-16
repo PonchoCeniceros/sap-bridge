@@ -120,6 +120,8 @@ export type HanaEndpoint<T extends unknown[], R> = (
  */
 export interface SapAPI {
   get(session: SapSession, apiUrl: string, query: string, maxPageSize?: number): Promise<ApiResponse<unknown>>;
+  post(session: SapSession, apiUrl: string, query: string, body: unknown): Promise<ApiResponse<unknown>>;
+  patch(session: SapSession, apiUrl: string, query: string, body: unknown, replace?: boolean): Promise<ApiResponse<unknown>>;
   hana: {
     get(params: HanaParams, query: string): Promise<ApiResponse<unknown>>;
   }
