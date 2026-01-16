@@ -118,6 +118,20 @@ export function isSpecial(res: any): res is SpecialResponse {
 }
 
 /**
+ * Type Guard para verificar si un objeto es una ApiResponse<T>
+ */
+export function isApiResponse<T>(obj: unknown): obj is ApiResponse<T> {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'isOk' in obj &&
+    typeof (obj as any).isOk === 'boolean' &&
+    'mssg' in obj &&
+    typeof (obj as any).mssg === 'string'
+  );
+}
+
+/**
  *
  */
 export type ServiceLayerEndpoint<T extends unknown[], R> = (
