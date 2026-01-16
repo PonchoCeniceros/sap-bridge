@@ -11,6 +11,25 @@ export interface ApiResponse<T> {
 }
 
 /**
+ * Opciones para configurar el SessionHandler
+ */
+export interface SessionHandlerOptions {
+  debug?: boolean;
+  storageType?: 'redis' | 'json';  // Tipo de almacenamiento para sesiones
+  jsonFilePath?: string;           // Ruta del archivo JSON (solo para storageType: 'json')
+  redisUrl?: string;               // URL de Redis (opcional, sobrescribe SessionStorage)
+}
+
+/**
+ * Interfaz para adaptadores de almacenamiento de sesiones
+ */
+export interface SessionStorageAdapter {
+  getSession(): Promise<SapSession | null>;
+  setSession(session: SapSession): Promise<void>;
+  cleanSession(): Promise<void>;
+}
+
+/**
  * sesión
  */
 export interface SapSession {
@@ -102,7 +121,7 @@ export function isSpecial(res: any): res is SpecialResponse {
  *
  */
 export type ServiceLayerEndpoint<T extends unknown[], R> = (
-  session: SapSession,
+  session: SapSession | null,
   apiUrl: string,
   ...args: T
 ) => Promise<ApiResponse<R>>;
@@ -119,9 +138,9 @@ export type HanaEndpoint<T extends unknown[], R> = (
  *
  */
 export interface SapAPI {
-  get(session: SapSession, apiUrl: string, query: string, maxPageSize?: number): Promise<ApiResponse<unknown>>;
-  post(session: SapSession, apiUrl: string, query: string, body: unknown): Promise<ApiResponse<unknown>>;
-  patch(session: SapSession, apiUrl: string, query: string, body: unknown, replace?: boolean): Promise<ApiResponse<unknown>>;
+  get(session: SapSession | null, apiUrl: string, query: string, maxPageSize?: number): Promise<ApiResponse<unknown>>;
+  post(session: SapSession | null, apiUrl: string, query: string, body: unknown): Promise<ApiResponse<unknown>>;
+  patch(session: SapSession | null, apiUrl: string, query: string, body: unknown, replace?: boolean): Promise<ApiResponse<unknown>>;
   hana: {
     get(params: HanaParams, query: string): Promise<ApiResponse<unknown>>;
   }
@@ -132,7 +151,7 @@ export interface SapAPI {
  */
 export interface SapSessionHandler {
   login: () => Promise<ApiResponse<void>>;
-  getSession: () => Promise<SapSession>;
+  getSession: () => Promise<SapSession | null>;
   setSession: (session: SapSession) => Promise<void>;
   cleanSession: () => Promise<void>;
   onSession: <T extends unknown[], R>(endpoint: ServiceLayerEndpoint<T, R>) => (...args: T) => Promise<ApiResponse<R>>;

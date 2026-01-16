@@ -11,7 +11,13 @@ export function SapApi(): SapAPI {
     /**
      *
      */
-    async get(session: SapSession, apiUrl: string, query: string, maxPageSize?: number): Promise<ApiResponse<unknown>> {
+    async get(session: SapSession | null, apiUrl: string, query: string, maxPageSize?: number): Promise<ApiResponse<unknown>> {
+      if (!session) {
+        return {
+          isOk: false,
+          mssg: 'Session is required for API calls'
+        };
+      }
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
       try {
@@ -77,7 +83,13 @@ export function SapApi(): SapAPI {
     /**
      *
      */
-    async post(session: SapSession, apiUrl: string, query: string, body: unknown): Promise<ApiResponse<unknown>> {
+    async post(session: SapSession | null, apiUrl: string, query: string, body: unknown): Promise<ApiResponse<unknown>> {
+      if (!session) {
+        return {
+          isOk: false,
+          mssg: 'Session is required for API calls'
+        };
+      }
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
       try {
@@ -145,7 +157,13 @@ export function SapApi(): SapAPI {
     /**
      *
      */
-    async patch(session: SapSession, apiUrl: string, query: string, body: unknown, replace?: boolean): Promise<ApiResponse<unknown>> {
+    async patch(session: SapSession | null, apiUrl: string, query: string, body: unknown, replace?: boolean): Promise<ApiResponse<unknown>> {
+      if (!session) {
+        return {
+          isOk: false,
+          mssg: 'Session is required for API calls'
+        };
+      }
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
       try {

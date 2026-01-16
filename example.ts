@@ -6,9 +6,13 @@ import type { SapCredentials, SapAPI, SapSessionHandler, SessionHandlerOptions }
  * Provider Pattern - Centralized SAP Configuration
  * Based on src/orders/providers.ts
  */
-function SapProvider(debug?: boolean) {
+function SapProvider(debug?: boolean, storageType?: 'redis' | 'json', jsonFilePath?: string) {
   const credentials: SapCredentials = SapConn();
-  const options: SessionHandlerOptions = { debug: debug ?? false };
+  const options: SessionHandlerOptions = {
+    debug: debug ?? false,
+    storageType: storageType ?? 'redis',
+    jsonFilePath: jsonFilePath
+  };
   const hdl: SapSessionHandler = SessionHandler(credentials, options);
   const api: SapAPI = SapApi();
 
@@ -111,9 +115,77 @@ async function basicExample() {
   console.log('HANA Data:', hanaData);
 }
 
+/**
+ * Example using JSON file storage instead of Redis
+ */
+async function jsonStorageExample() {
+  // Get credentials from environment variables
+  const credentials = SapConn();
+
+  // Create session handler with JSON file storage
+  const jsonOptions: SessionHandlerOptions = {
+    debug: true,
+    storageType: 'json',
+    jsonFilePath: './my-sap-session.json'
+  };
+  const sessionHandler = SessionHandler(credentials, jsonOptions);
+  const sapApi = SapApi();
+
+  console.log('=== Using JSON File Storage ===');
+
+  // Login to Service Layer (session will be saved to JSON file)
+  const loginResult = await sessionHandler.login();
+  console.log('Login result:', loginResult);
+
+  // Make an API call
+  const wrappedGet = sessionHandler.onSession(sapApi.get);
+  const businessPartners = await wrappedGet('BusinessPartners', 5);
+  console.log('Business Partners:', businessPartners);
+
+  // The session is automatically saved to the JSON file
+  console.log('Session saved to JSON file');
+}
+
+/**
+ * Example handling Redis unavailability gracefully
+ */
+async function redisFallbackExample() {
+  // Get credentials from environment variables
+  const credentials = SapConn();
+
+  // Create session handler with Redis storage
+  const redisOptions: SessionHandlerOptions = {
+    debug: true,
+    storageType: 'redis',
+    redisUrl: 'redis://localhost:6379' // This Redis instance might not be running
+  };
+  const sessionHandler = SessionHandler(credentials, redisOptions);
+  const sapApi = SapApi();
+
+  console.log('=== Redis Fallback Example ===');
+  console.log('If Redis is not running, the application will continue working');
+
+  try {
+    // This will work even if Redis is down
+    const loginResult = await sessionHandler.login();
+    console.log('Login result:', loginResult);
+
+    // Make an API call - session works for this request
+    const wrappedGet = sessionHandler.onSession(sapApi.get);
+    const businessPartners = await wrappedGet('BusinessPartners', 5);
+    console.log('Business Partners:', businessPartners);
+
+    console.log('Note: Session is not persisted when Redis is unavailable');
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
 export {
   exampleUsage,
   basicExample,
+  jsonStorageExample,
+  redisFallbackExample,
   SapProvider,
   getOrdersBySl,
   getOrdersByHana

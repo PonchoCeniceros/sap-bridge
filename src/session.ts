@@ -1,25 +1,23 @@
-import { createClient } from "redis";
 import { handleResponse } from "./utils.js";
+import { RedisSessionAdapter, JsonFileSessionAdapter } from "./storage/index.js";
 import type {
   SapCredentials,
   SapSessionHandler,
   SapSession,
   HanaParams,
-  ApiResponse
+  ApiResponse,
+  SessionStorageAdapter,
+  SessionHandlerOptions
 } from './types.js';
-
-/**
- * Opciones para configurar el SessionHandler
- */
-export interface SessionHandlerOptions {
-  debug?: boolean;
-}
 
 /**
  *
  */
 export function SessionHandler(credentials: SapCredentials, options?: SessionHandlerOptions): SapSessionHandler {
   const isDebug = options?.debug ?? (process.env.SAP_DEBUG === 'true' || process.env.NODE_ENV === 'development');
+  const storageType = options?.storageType ?? 'redis';
+  const jsonFilePath = options?.jsonFilePath ?? './sap-session.json';
+  const redisUrl = options?.redisUrl ?? credentials.serviceLayer.SessionStorage;
 
   /**
    * Helper para logging condicional
@@ -31,6 +29,13 @@ export function SessionHandler(credentials: SapCredentials, options?: SessionHan
     red: (message: string) => { if (isDebug) console.log(`\x1b[31m${message}`); }
   };
 
+  /**
+   * Adaptador de almacenamiento seleccionado
+   */
+  const storageAdapter: SessionStorageAdapter = storageType === 'json'
+    ? new JsonFileSessionAdapter(jsonFilePath, isDebug)
+    : new RedisSessionAdapter(redisUrl || '', isDebug);
+
   return {
     /**
      *
@@ -41,7 +46,7 @@ export function SessionHandler(credentials: SapCredentials, options?: SessionHan
       try {
         const { CompanyDB, UserName, Password, ApiUrl } = credentials.serviceLayer;
 
-        const prevSession = await this.getSession();
+        const prevSession: SapSession | null = await this.getSession();
         if (prevSession) {
           log.cyan(`[📁] sesion previa existente: ${prevSession.id}`);
           return {
@@ -95,36 +100,22 @@ export function SessionHandler(credentials: SapCredentials, options?: SessionHan
     /**
      *
      */
-    async getSession(): Promise<SapSession> {
-      const { SessionStorage } = credentials.serviceLayer;
-      const redisClient = createClient({ url: SessionStorage });
-      redisClient.connect();
-      const sessionString = await redisClient.get("b1_session");
-      await redisClient.quit();
-      const session = sessionString ? JSON.parse(sessionString) : null;
-      return session;
+    async getSession(): Promise<SapSession | null> {
+      return await storageAdapter.getSession();
     },
 
     /**
      *
      */
-    async setSession(session: SapSession) {
-      const { SessionStorage } = credentials.serviceLayer;
-      const redisClient = createClient({ url: SessionStorage });
-      redisClient.connect();
-      await redisClient.set("b1_session", JSON.stringify(session));
-      await redisClient.quit();
+    async setSession(session: SapSession): Promise<void> {
+      await storageAdapter.setSession(session);
     },
 
     /**
      *
      */
     async cleanSession(): Promise<void> {
-      const { SessionStorage } = credentials.serviceLayer;
-      const redisClient = createClient({ url: SessionStorage });
-      redisClient.connect();
-      await redisClient.del("b1_session");
-      await redisClient.quit();
+      await storageAdapter.cleanSession();
     },
 
     /**
@@ -134,7 +125,19 @@ export function SessionHandler(credentials: SapCredentials, options?: SessionHan
       return async (...args) => {
         const apiUrl = credentials.serviceLayer.ApiUrl || "";
         log.blue('[📁] primer intento de uso de la sesion...');
-        const session = await this.getSession();
+        let session = await this.getSession();
+
+        // Si no hay sesión almacenada, hacer login primero
+        if (!session) {
+          log.cyan('[📁] no hay sesión almacenada, haciendo login...');
+          await this.login();
+          session = await this.getSession();
+        }
+
+        if (!session) {
+          throw new Error('Failed to obtain session after login');
+        }
+
         const result = await endpoint(session, apiUrl, ...args);
 
         if (result?.expired) {
@@ -142,6 +145,9 @@ export function SessionHandler(credentials: SapCredentials, options?: SessionHan
           await this.cleanSession();
           await this.login();
           const newSession = await this.getSession();
+          if (!newSession) {
+            throw new Error('Failed to obtain session after re-login');
+          }
           const newResult = await endpoint(newSession, apiUrl, ...args);
           return newResult;
         }

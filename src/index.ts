@@ -22,7 +22,7 @@ export type {
 } from './types.js';
 
 // Export opciones de configuración
-export type { SessionHandlerOptions } from './session.js';
+export type { SessionHandlerOptions } from './types.js';
 
 // Export por defecto para facilitar uso
 import { SapConn } from './config.js';
