@@ -11,7 +11,15 @@ export function SapApi(): SapAPI {
     /**
      *
      */
-    async get(session: SapSession, apiUrl: string, query: string, maxPageSize?: number): Promise<ApiResponse<unknown>> {
+    async get(session: SapSession | null, apiUrl: string, query: string, maxPageSize?: number): Promise<ApiResponse<unknown>> {
+      if (!session) {
+        return {
+          isOk: false,
+          mssg: 'Session is required for API calls'
+        };
+      }
+
+      process.env.NODE_NO_WARNINGS = '1';
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
       try {
@@ -23,7 +31,6 @@ export function SapApi(): SapAPI {
           }
         });
         const resp = await handleResponse(resl);
-
 
         if (resp === null) {
           return {
@@ -72,8 +79,164 @@ export function SapApi(): SapAPI {
 
       } finally {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
+        process.env.NODE_NO_WARNINGS = '0';
       }
     },
+
+    /**
+     *
+     */
+    async post(session: SapSession | null, apiUrl: string, query: string, body: unknown): Promise<ApiResponse<unknown>> {
+      if (!session) {
+        return {
+          isOk: false,
+          mssg: 'Session is required for API calls'
+        };
+      }
+
+      process.env.NODE_NO_WARNINGS = '1';
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+      try {
+        const resl = await fetch(`${apiUrl}/${query}`, {
+          method: 'POST',
+          headers: {
+            'Cookie': `B1SESSION=${session.id}; ROUTEID=${session.node}`,
+          },
+          body: JSON.stringify(body)
+        });
+        const resp = await handleResponse(resl);
+
+        if (resp === null) {
+          return {
+            isOk: true,
+            mssg: 'successfull query (HTTP 204)'
+          } as ApiResponse<unknown>;
+        }
+        else if (isCollection<unknown>(resp)) {
+          return {
+            isOk: true,
+            data: resp.value,
+            mssg: 'collection object successfully quered'
+          } as ApiResponse<unknown>;
+        }
+        else if (isSingle<unknown>(resp)) {
+          return {
+            isOk: true,
+            data: resp,
+            mssg: 'single object successfully quered'
+          } as ApiResponse<SingleResponse<any>>;
+        }
+        else if (isSpecial(resp)) {
+          return {
+            isOk: true,
+            data: resp,
+            mssg: 'special object successfully quered'
+          } as ApiResponse<SpecialResponse>;
+        }
+        else {
+          return {
+            isOk: true,
+            data: resp,
+            mssg: 'successfull query'
+          } as ApiResponse<unknown>;
+
+        }
+
+      } catch (error: unknown) {
+        const mssg = error instanceof Error ? error.message : "Unknown error";
+
+        return {
+          expired: isSessionExpired(mssg),
+          isOk: false,
+          mssg
+        } as ApiResponse<void>;
+
+      } finally {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
+        process.env.NODE_NO_WARNINGS = '0';
+      }
+    },
+
+
+
+    /**
+     *
+     */
+    async patch(session: SapSession | null, apiUrl: string, query: string, body: unknown, replace?: boolean): Promise<ApiResponse<unknown>> {
+      if (!session) {
+        return {
+          isOk: false,
+          mssg: 'Session is required for API calls'
+        };
+      }
+
+      process.env.NODE_NO_WARNINGS = '1';
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+      try {
+        const resl = await fetch(`${apiUrl}/${query}`, {
+          method: 'PATCH',
+          headers: {
+            'Cookie': `B1SESSION=${session.id}; ROUTEID=${session.node}`,
+            'B1S-ReplaceCollectionsOnPatch': replace ? 'true' : 'false'
+          },
+          body: JSON.stringify(body)
+        });
+        const resp = await handleResponse(resl);
+
+        if (resp === null) {
+          return {
+            isOk: true,
+            mssg: 'successfull query (HTTP 204)'
+          } as ApiResponse<unknown>;
+        }
+        else if (isCollection<unknown>(resp)) {
+          return {
+            isOk: true,
+            data: resp.value,
+            mssg: 'collection object successfully quered'
+          } as ApiResponse<unknown>;
+        }
+        else if (isSingle<unknown>(resp)) {
+          return {
+            isOk: true,
+            data: resp,
+            mssg: 'single object successfully quered'
+          } as ApiResponse<SingleResponse<any>>;
+        }
+        else if (isSpecial(resp)) {
+          return {
+            isOk: true,
+            data: resp,
+            mssg: 'special object successfully quered'
+          } as ApiResponse<SpecialResponse>;
+        }
+        else {
+          return {
+            isOk: true,
+            data: resp,
+            mssg: 'successfull query'
+          } as ApiResponse<unknown>;
+
+        }
+
+      } catch (error: unknown) {
+        const mssg = error instanceof Error ? error.message : "Unknown error";
+
+        return {
+          expired: isSessionExpired(mssg),
+          isOk: false,
+          mssg
+        } as ApiResponse<void>;
+
+      } finally {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
+        process.env.NODE_NO_WARNINGS = '0';
+      }
+    },
+
+
 
     hana: {
       /**

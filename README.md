@@ -154,6 +154,56 @@ SAP_API_HN_SSL=false
 SAP_DEBUG=true
 ```
 
+## Configuración de Almacenamiento de Sesiones
+
+### Tipos de Almacenamiento
+
+El módulo soporta dos tipos de almacenamiento para sesiones:
+
+1. **Redis** (por defecto): Almacenamiento en memoria Redis
+2. **JSON**: Almacenamiento en archivo JSON local
+
+### Configuración de Redis (Predeterminado)
+
+```typescript
+// Usando variable de entorno (recomendado)
+process.env.SAP_API_SL_STG = 'redis://localhost:6379';
+
+const sessionHandler = SessionHandler(credentials);
+
+// O especificando URL directamente
+const sessionHandler = SessionHandler(credentials, {
+  storageType: 'redis',
+  redisUrl: 'redis://localhost:6379'
+});
+```
+
+### Configuración de JSON File
+
+```typescript
+const sessionHandler = SessionHandler(credentials, {
+  storageType: 'json',
+  jsonFilePath: './my-sap-session.json'  // opcional, default: './sap-session.json'
+});
+```
+
+### Manejo de Errores de Redis
+
+Cuando Redis no está disponible, el módulo maneja los errores gracefully:
+
+- **getSession()**: Retorna `null` si Redis no está disponible (fuerza login fresco)
+- **setSession()**: Registra warning pero permite que la aplicación continúe
+- **Aplicación**: Sigue funcionando normalmente sin persistencia de sesiones
+
+```typescript
+// La aplicación funciona incluso si Redis está caído
+const sessionHandler = SessionHandler(credentials, { debug: true });
+await sessionHandler.login(); // Funciona, pero no persiste la sesión
+
+// Las llamadas API funcionan para la sesión actual
+const result = await sessionHandler.onSession(api.get)('BusinessPartners');
+```
+
 ## Modo Debug
 
 ### Habilitar debug por variable de entorno
@@ -169,15 +219,11 @@ const sessionHandler = SessionHandler(credentials);
 // Opción 2: Parámetro explícito
 const sessionHandler = SessionHandler(credentials, { debug: true });
 
-// Opción 3: Combinación de colores y debug
-const sessionHandler = SessionHandler(credentials, { 
+// Opción 3: Combinación con opciones de almacenamiento
+const sessionHandler = SessionHandler(credentials, {
   debug: true,
-  colors: {
-    RED: '\x1b[91m',  // Rojo brillante
-    GREEN: '\x1b[92m', // Verde brillante
-    BLUE: '\x1b[94m',  // Azul brillante
-    CIAN: '\x1b[96m'   // Cian brillante
-  }
+  storageType: 'json',
+  jsonFilePath: './debug-session.json'
 });
 ```
 
@@ -210,13 +256,16 @@ El modo debug se activa automáticamente si:
 **Opciones de SessionHandler:**
 ```typescript
 interface SessionHandlerOptions {
-  colors?: {    // Colores personalizados para logs
+  debug?: boolean;                    // Mostrar/ocultar logs de debug (default: process.env.SAP_DEBUG)
+  storageType?: 'redis' | 'json';     // Tipo de almacenamiento (default: 'redis')
+  jsonFilePath?: string;              // Ruta del archivo JSON (default: './sap-session.json')
+  redisUrl?: string;                  // URL de Redis (opcional, sobrescribe SAP_API_SL_STG)
+  colors?: {                          // Colores personalizados para logs
     RED?: string;
     GREEN?: string;
     BLUE?: string;
     CIAN?: string;
   };
-  debug?: boolean;  // Mostrar/ocultar logs de debug (default: process.env.SAP_DEBUG)
 }
 ```
 
@@ -246,7 +295,8 @@ hdl.hana.getCompany() // Returns company database
 - ✅ Tipado completo con TypeScript
 - ✅ Soporte para Service Layer y HANA
 - ✅ Manejo de errores centralizado
-- ✅ Session storage con Redis
+- ✅ Almacenamiento flexible: Redis o JSON files
+- ✅ Resistente a fallos de Redis (graceful degradation)
 - ✅ Imports optimizados de tipos
 
 ## Licencia

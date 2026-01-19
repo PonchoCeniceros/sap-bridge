@@ -22,13 +22,12 @@ export type {
 } from './types.js';
 
 // Export opciones de configuración
-export type { SessionHandlerOptions } from './session.js';
+export type { SessionHandlerOptions } from './types.js';
 
 // Export por defecto para facilitar uso
 import { SapConn } from './config.js';
 import { SapApi } from './adapter.js';
 import { SessionHandler } from './session.js';
-import { SapCredentials, SapAPI, SapSessionHandler } from './types.js';
 
 export default {
   SapConn,
