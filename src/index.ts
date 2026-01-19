@@ -29,9 +29,21 @@ export type { SessionHandlerOptions } from './types.js';
 import { SapConn } from './config.js';
 import { SapApi } from './api.js';
 import { SessionHandler } from './session.js';
+import type { SessionHandlerOptions, SapCredentials, SapAPI } from './types.js';
+
+/**
+ * Factory para obtener la API de SAP lista para usar
+ */
+export function SapProvider(credentials: SapCredentials, options: SessionHandlerOptions): SapAPI {
+  const handler = new SessionHandler(credentials, options);
+  const client = new SapApi(handler);
+  return client as unknown as SapAPI;
+}
+
 
 export default {
   SapConn,
   SapApi,
-  SessionHandler
+  SessionHandler,
+  SapProvider
 };
