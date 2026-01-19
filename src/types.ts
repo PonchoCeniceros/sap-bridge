@@ -120,15 +120,25 @@ export function isSpecial(res: any): res is SpecialResponse {
 /**
  * Type Guard para verificar si un objeto es una ApiResponse<T>
  */
-export function isApiResponse<T>(obj: unknown): obj is ApiResponse<T> {
-  return (
+export function isApiResponse<T>(
+  obj: unknown,
+  validateData?: (data: unknown) => data is T // Recibimos el isOrder aquí
+): obj is ApiResponse<T> {
+
+  const isBasicResponse = (
     typeof obj === 'object' &&
     obj !== null &&
     'isOk' in obj &&
-    typeof (obj as any).isOk === 'boolean' &&
-    'mssg' in obj &&
-    typeof (obj as any).mssg === 'string'
+    'mssg' in obj
   );
+
+  if (!isBasicResponse) return false;
+
+  // Si no pasamos validador, solo validamos la estructura básica
+  if (!validateData) return true;
+
+  // Si pasamos validador, comprobamos que 'data' cumpla con él
+  return validateData((obj as any).data);
 }
 
 /**

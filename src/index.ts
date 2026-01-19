@@ -28,7 +28,6 @@ export type { SessionHandlerOptions } from './types.js';
 import { SapConn } from './config.js';
 import { SapApi } from './adapter.js';
 import { SessionHandler } from './session.js';
-import { SapCredentials, SapAPI, SapSessionHandler } from './types.js';
 
 export default {
   SapConn,
