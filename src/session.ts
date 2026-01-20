@@ -44,8 +44,9 @@ export class SessionHandler implements SapSessionHandler {
     process.env.NODE_NO_WARNINGS = '1';
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+    const { CompanyDB, UserName, Password, ApiUrl } = this.credentials.serviceLayer;
+
     try {
-      const { CompanyDB, UserName, Password, ApiUrl } = this.credentials.serviceLayer;
 
       const prevSession: SapSession | null = await this.getSession();
       if (prevSession) {
@@ -86,7 +87,8 @@ export class SessionHandler implements SapSessionHandler {
       };
 
     } catch (error: unknown) {
-      const mssg = error instanceof Error ? error.message : "Unknown error";
+      const baseMssg = error instanceof Error ? error.message : "Unknown error";
+      const mssg = `Failed to login via ${ApiUrl}/Login: ${baseMssg}`;
       return {
         isOk: false,
         mssg,

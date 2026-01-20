@@ -71,7 +71,8 @@ export class SapApi {
       }
 
     } catch (error: unknown) {
-      const mssg = error instanceof Error ? error.message : "Unknown error";
+      const baseMssg = error instanceof Error ? error.message : "Unknown error";
+      const mssg = `Failed to GET ${apiUrl}/${query}: ${baseMssg}`;
 
       return {
         expired: isSessionExpired(mssg),
@@ -144,7 +145,8 @@ export class SapApi {
       }
 
     } catch (error: unknown) {
-      const mssg = error instanceof Error ? error.message : "Unknown error";
+      const baseMssg = error instanceof Error ? error.message : "Unknown error";
+      const mssg = `Failed to POST ${apiUrl}/${query}: ${baseMssg}`;
 
       return {
         expired: isSessionExpired(mssg),
@@ -218,7 +220,8 @@ export class SapApi {
       }
 
     } catch (error: unknown) {
-      const mssg = error instanceof Error ? error.message : "Unknown error";
+      const baseMssg = error instanceof Error ? error.message : "Unknown error";
+      const mssg = `Failed to PATCH ${apiUrl}/${query}: ${baseMssg}`;
 
       return {
         expired: isSessionExpired(mssg),
