@@ -6,7 +6,11 @@ import type { SapSessionHandler, ApiResponse, SingleResponse, SpecialResponse } 
 
 
 export class SapApi {
-  constructor(public handler: SapSessionHandler) { }
+  public company: string;
+
+  constructor(public handler: SapSessionHandler) {
+    this.company = handler.hana.getCompany();
+  }
 
   @OnSession
   async get(session: any, apiUrl: any, query: string, maxPageSize?: number) {
@@ -229,7 +233,7 @@ export class SapApi {
   }
 
   @OnHana
-  private async _hanaGet(params: any, query: string) {
+  private async _query(params: any, query: string) {
     const { createConnection } = hdb;
     const cnxn: hdb.Connection = createConnection();
     const connParams: hdb.ConnectionOptions = { ...params.credentials };
@@ -262,7 +266,7 @@ export class SapApi {
   // Estructura HANA compatible con la interfaz
   get hana() {
     return {
-      get: (query: string) => this._hanaGet(null as any, query)
+      query: (str: string) => this._query(null as any, str)
     };
   }
 }

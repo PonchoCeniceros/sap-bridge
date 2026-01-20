@@ -13,13 +13,11 @@ export type {
   HanaParams,
   SapErrorResponse,
   CollectionResponse,
-  SingleResponse,
   SpecialResponse,
-  ServiceLayerEndpoint,
-  HanaEndpoint,
   SapAPI,
   SapSessionHandler,
-  SapCredentials
+  SapCredentials,
+  SingleResponse,
 } from './types.js';
 
 // Export opciones de configuración

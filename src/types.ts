@@ -86,30 +86,14 @@ export interface SpecialResponse {
 /**
  *
  */
-export type ServiceLayerEndpoint<T extends unknown[], R> = (
-  session: SapSession | null,
-  apiUrl: string,
-  ...args: T
-) => Promise<ApiResponse<R>>;
-
-/**
- *
- */
-export type HanaEndpoint<T extends unknown[], R> = (
-  params: HanaParams,
-  ...args: T
-) => Promise<ApiResponse<R>>;
-
-/**
- *
- */
 export interface SapAPI {
+  company: string;
   get(query: string, maxPageSize?: number): Promise<ApiResponse<unknown>>;
   post(query: string, body: unknown): Promise<ApiResponse<unknown>>;
   patch(query: string, body: unknown, replace?: boolean): Promise<ApiResponse<unknown>>;
 
   hana: {
-    get(query: string): Promise<ApiResponse<unknown>>;
+    query(str: string): Promise<ApiResponse<unknown>>;
   }
 }
 

@@ -49,7 +49,7 @@ export class SessionHandler implements SapSessionHandler {
 
       const prevSession: SapSession | null = await this.getSession();
       if (prevSession) {
-        // log.cyan(`[📁] sesion previa existente: ${prevSession.id}`);
+        // console.log(`[📁] sesion previa existente: ${prevSession.id}`);
         return {
           isOk: true,
           mssg: 'Login successful.'
@@ -77,7 +77,7 @@ export class SessionHandler implements SapSessionHandler {
         node: routeMatch[1],
         timeout: Date.now() + (resp.SessionTimeout * 60 * 1000),
       };
-      // log.green(`[📁] nueva sesion cargada: ${session.id}`);
+      // console.log(`[📁] nueva sesion cargada: ${session.id}`);
       await this.setSession(session);
 
       return {
@@ -87,7 +87,6 @@ export class SessionHandler implements SapSessionHandler {
 
     } catch (error: unknown) {
       const mssg = error instanceof Error ? error.message : "Unknown error";
-
       return {
         isOk: false,
         mssg,
