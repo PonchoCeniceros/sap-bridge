@@ -10,10 +10,8 @@ export function OnSession(endpoint: any, _context: ClassMethodDecoratorContext) 
       await hdl.login();
       session = await hdl.getSession();
     }
-
     // Inyectamos session y apiUrl
     let result = await endpoint.call(this, session, hdl.apiUrl, ...args);
-
     // Lógica de reintento si expira
     if (result?.expired) {
       await hdl.cleanSession();
@@ -29,7 +27,12 @@ export function OnSession(endpoint: any, _context: ClassMethodDecoratorContext) 
 export function OnHana(endpoint: any, _context: ClassMethodDecoratorContext) {
   return async function(this: any, ...args: any[]) {
     const hdl: SapSessionHandler = this.handler;
-    const params = hdl.hana.getParams(); // Usamos la estructura anidada
-    return await endpoint.call(this, params, ...args);
+    // Usamos la estructura anidada
+    const params = hdl.hana.getParams();
+    // Extraemos todos los argumentos excepto el primero (que es el null/placeholder)
+    const [_, ...rest] = args;
+    // Llamamos a la función inyectando 'params' y luego el resto de argumentos reales
+    return await endpoint.call(this, params, ...rest);
+
   };
 }

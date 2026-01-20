@@ -15,10 +15,7 @@ export class SapApi {
   @OnSession
   async get(session: any, apiUrl: any, query: string, maxPageSize?: number) {
     if (!session) {
-      return {
-        isOk: false,
-        mssg: 'Session is required for API calls'
-      };
+      throw new Error('Session is required for API calls');
     }
 
     process.env.NODE_NO_WARNINGS = '1';
@@ -89,10 +86,7 @@ export class SapApi {
   @OnSession
   async post(session: any, apiUrl: any, query: string, body: unknown) {
     if (!session) {
-      return {
-        isOk: false,
-        mssg: 'Session is required for API calls'
-      };
+      throw new Error('Session is required for API calls');
     }
 
     process.env.NODE_NO_WARNINGS = '1';
@@ -163,10 +157,7 @@ export class SapApi {
   @OnSession
   async patch(session: any, apiUrl: any, query: string, body: unknown, replace?: boolean) {
     if (!session) {
-      return {
-        isOk: false,
-        mssg: 'Session is required for API calls'
-      };
+      throw new Error('Session is required for API calls');
     }
 
     process.env.NODE_NO_WARNINGS = '1';
@@ -236,40 +227,63 @@ export class SapApi {
   }
 
   @OnHana
-  private async _query(params: any, query: string) {
+  private async _hanaQuery(params: any, query: string) {
     const { createConnection } = hdb;
-    const cnxn: hdb.Connection = createConnection();
-    const connParams: hdb.ConnectionOptions = { ...params.credentials };
+    let cnxn: hdb.Connection | undefined;
 
-    await new Promise<void>((resolve, reject) => {
-      cnxn.connect(connParams, (err: Error) => {
-        if (err) return reject(`Hana error connection: ${err}`);
-        resolve();
+    try {
+      if (!params?.credentials) {
+        throw new Error("HANA credentials are missing in params.");
+      }
+      const connParams: hdb.ConnectionOptions = { ...params.credentials };
+      cnxn = createConnection();
+
+      // promise para la conexion con la base de datos
+      await new Promise<void>((resolve, reject) => {
+        cnxn!.connect(connParams, (err: Error) => {
+          if (err) return reject(new Error(`Hana error connection: ${err}`));
+          resolve();
+        });
       });
-    });
 
-    const resl: ApiResponse<unknown> = await new Promise((resolve, _reject) => {
-      cnxn.exec(query, (err: any, resl: any) => {
-        const resp = (err) ? {
-          isOk: false,
-          mssg: `${err}`,
-        } : {
-          isOk: true,
-          mssg: `successfull`,
-          data: resl
-        } as ApiResponse<unknown>;
-        resolve(resp);
+      // promise para la ejecucion de la consulta
+      const resl = await new Promise<any>((resolve, reject) => {
+        cnxn!.exec(query, (err: any, rows: any) => {
+          if (err) {
+            // Incluimos la query en el error para que el debug sea instantáneo
+            return reject(new Error(`HANA Exec Error: ${err.message} | Query: ${query}`));
+          }
+          resolve(rows);
+        });
       });
-    });
 
-    cnxn.disconnect();
-    return resl;
+      // Éxito: Retornamos el objeto ApiResponse
+      return {
+        isOk: true,
+        mssg: `Query successful`,
+        data: resl
+      };
+    } catch (error) {
+      const baseMssg = error instanceof Error ? error.message : String(error);
+      throw new Error(baseMssg);
+
+    } finally {
+      if (cnxn) {
+        try {
+          cnxn.disconnect();
+        } catch (err) {
+          // Logueamos el error de desconexión pero no lo lanzamos 
+          // para no ocultar el error principal de la query.
+          console.error("Error al intentar disconnect en Hana:", err);
+        }
+      }
+    }
   }
 
   // Estructura HANA compatible con la interfaz
   get hana() {
     return {
-      query: (str: string) => this._query(null as any, str)
+      query: (str: string) => this._hanaQuery(null as any, str)
     };
   }
 }
