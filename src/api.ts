@@ -1,5 +1,5 @@
 import hdb from "@sap/hana-client";
-import { OnSession, OnHana } from "./decorators";
+import { OnSession, OnHana } from "./decorators/index.js";
 import { handleResponse, isSessionExpired } from "./utils.js";
 import { isCollection, isSingle, isSpecial } from "./guards.js";
 import type { SapSessionHandler, ApiResponse, SingleResponse, SpecialResponse } from "./types.js";
