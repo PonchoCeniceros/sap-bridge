@@ -151,3 +151,5 @@ if (result.isOk) {
 ```
 
 > La respuesta de SAP (`result.data`) es un string `multipart/mixed` crudo que debe parsearse según las necesidades de cada caso.
+
+---
