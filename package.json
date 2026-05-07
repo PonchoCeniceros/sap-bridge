@@ -46,7 +46,9 @@
   },
   "homepage": "https://github.com/ponchoceniceros/sap#readme",
   "dependencies": {
-    "@sap/hana-client": "^2.27.19",
+    "@sap/hana-client": "^2.27.19"
+  },
+  "optionalDependencies": {
     "redis": "^5.10.0"
   },
   "devDependencies": {
