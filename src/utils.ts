@@ -6,12 +6,14 @@ import { SingleResponse, CollectionResponse, SpecialResponse, SapErrorResponse }
  *
  */
 async function parseError(res: Response): Promise<string> {
+  // Clonamos la respuesta para poder leerla dos veces si es necesario
+  const resClone = res.clone();
   try {
     const errorData = await res.json() as SapErrorResponse;
     return errorData?.error?.message?.value || JSON.stringify(errorData);
-
   } catch {
-    return res.text();
+    // Si falla el JSON, leemos el clon como texto
+    return resClone.text();
   }
 }
 
