@@ -265,7 +265,10 @@ export class SapApi {
       };
     } catch (error) {
       const baseMssg = error instanceof Error ? error.message : String(error);
-      throw new Error(baseMssg);
+      return {
+        isOk: false,
+        mssg: baseMssg
+      };
 
     } finally {
       if (cnxn) {

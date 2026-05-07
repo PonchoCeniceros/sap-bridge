@@ -17,9 +17,9 @@ export class SessionHandler implements SapSessionHandler {
 
   constructor(private credentials: SapCredentials, options?: SessionHandlerOptions) {
     this.isDebug = options?.debug ?? false;
-    this.storageAdapter = options?.storageType === 'json'
-      ? new JsonFileSessionAdapter(options?.jsonFilePath ?? './sap.json', this.isDebug)
-      : new RedisSessionAdapter(credentials.serviceLayer.SessionStorage || '', this.isDebug);
+    this.storageAdapter = options?.storageType === 'redis'
+      ? new RedisSessionAdapter(options?.redisUrl || credentials.serviceLayer.SessionStorage || '', this.isDebug)
+      : new JsonFileSessionAdapter(options?.jsonFilePath ?? './sap.json', this.isDebug);
   }
 
   // Getter para cumplir con la interfaz
@@ -91,8 +91,10 @@ export class SessionHandler implements SapSessionHandler {
 
     } catch (error: unknown) {
       const baseMssg = error instanceof Error ? error.message : "Unknown error";
-      const mssg = `Failed to login via ${ApiUrl}/Login: ${baseMssg}`;
-      throw new Error(mssg)
+      return {
+        isOk: false,
+        mssg: `Failed to login via ${ApiUrl}/Login: ${baseMssg}`
+      };
 
     } finally {
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';

@@ -1,5 +1,6 @@
-import { createClient, RedisClientType } from "redis";
 import { SapSession, SessionStorageAdapter } from "../types.js";
+
+type RedisClientType = Awaited<ReturnType<typeof import("redis")["createClient"]>>;
 
 /**
  * Adaptador de almacenamiento usando Redis
@@ -19,6 +20,12 @@ export class RedisSessionAdapter implements SessionStorageAdapter {
    */
   private async getClient(): Promise<RedisClientType> {
     if (!this.client) {
+      let createClient: typeof import("redis")["createClient"];
+      try {
+        ({ createClient } = await import("redis"));
+      } catch {
+        throw new Error("Redis is not installed. Run: npm install redis");
+      }
       this.client = createClient({ url: this.redisUrl });
       this.client.on('error', (err) => {
         if (this.isDebug) {

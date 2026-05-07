@@ -7,15 +7,15 @@ export function OnSession(endpoint: any, _context: ClassMethodDecoratorContext) 
 
     let session = await hdl.getSession();
     if (!session) {
-      await hdl.login();
+      const loginResult = await hdl.login();
+      if (!loginResult.isOk) return loginResult;
       session = await hdl.getSession();
     }
-    // Inyectamos session y apiUrl
     let result = await endpoint.call(this, session, hdl.apiUrl, ...args);
-    // Lógica de reintento si expira
     if (result?.expired) {
       await hdl.cleanSession();
-      await hdl.login();
+      const loginResult = await hdl.login();
+      if (!loginResult.isOk) return loginResult;
       const newSession = await hdl.getSession();
       result = await endpoint.call(this, newSession, hdl.apiUrl, ...args);
     }
