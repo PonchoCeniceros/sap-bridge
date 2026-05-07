@@ -226,6 +226,48 @@ export class SapApi {
     }
   }
 
+  @OnSession
+  async batch(session: any, apiUrl: any, query: string, body: string, headers: Record<string, string>) {
+    process.env.NODE_NO_WARNINGS = '1';
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    try {
+      const resl = await fetch(`${apiUrl}/${query}`, {
+        method: 'POST',
+        headers: {
+          'Cookie': `B1SESSION=${session.id}; ROUTEID=${session.node}`,
+          ...headers
+        },
+        body
+      });
+
+      if (!resl.ok) {
+        const errorText = await resl.text();
+        throw new Error(`SAP API request failed with status ${resl.status}: ${errorText}`);
+      }
+
+      const raw = await resl.text();
+      return {
+        isOk: true,
+        mssg: 'batch request successful',
+        data: raw
+      } as ApiResponse<string>;
+
+    } catch (error: unknown) {
+      const baseMssg = error instanceof Error ? error.message : "Unknown error";
+      const mssg = `Failed to BATCH ${apiUrl}/${query}: ${baseMssg}`;
+      return {
+        expired: isSessionExpired(mssg),
+        isOk: false,
+        mssg
+      } as ApiResponse<string>;
+
+    } finally {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
+      process.env.NODE_NO_WARNINGS = '0';
+
+    }
+  }
+
   @OnHana
   private async _hanaQuery(params: any, query: string) {
     const { createConnection } = hdb;

@@ -1,4 +1,4 @@
-# SAP B1 Client — TypeScript
+# SAP Bridge
 
 Este es un wrapper TypeScript para interactuar con dos sistemas SAP: el Service Layer (API OData REST de SAP Business One) y la base de datos SAP HANA.
 
@@ -84,9 +84,70 @@ SAP_API_HN_SSL=...
 ## Uso típico
 
 ```ts
-const creds = SapConn(); // lee de process.env
-const api = SapProvider(creds, { debug: true }); // JSON por default, sin dependencias extra
+const api = SapProvider(SapConn(), { debug: true });
 
+// GET — sesión manejada automáticamente por @OnSession
 const result = await api.get('Orders?$top=10');
-const hanaResult = await api.hana.query('SELECT * FROM SOME_TABLE');
+if (result.isOk) console.log(result.data);
+
+// HANA — consulta SQL directa
+const rows = await api.hana.query(`
+  SELECT "DocNum", "CardCode", "DocTotal"
+  FROM "${api.company}"."ORDR"
+  LIMIT 10
+`);
+if (rows.isOk) console.log(rows.data);
 ```
+
+---
+
+## Batch requests
+
+El método `batch()` permite enviar múltiples operaciones en una sola llamada HTTP usando el protocolo `multipart/mixed` de SAP.
+
+El payload debe construirse manualmente — cada parte es una operación HTTP independiente:
+
+```ts
+function buildPayload(collection: string, records: any[]): [string, string] {
+  const boundary = `batch_${Date.now()}`;
+  const parts: string[] = [];
+
+  records.forEach((record, idx) => {
+    const part = [
+      `--${boundary}`,
+      'Content-Type: application/http',
+      'Content-Transfer-Encoding: binary',
+      `Content-ID: ${idx + 1}`,
+      '',
+      `POST /b1s/v1/${collection} HTTP/1.1`,
+      'Content-Type: application/json',
+      'Accept: application/json',
+      'B1S-ReplaceCollectionsOnPatch: false',
+      '',
+      JSON.stringify(record),
+      '',
+    ].join('\r\n');
+    parts.push(part);
+  });
+
+  parts.push(`--${boundary}--`);
+  return [boundary, parts.join('\r\n')] as const;
+}
+
+const [boundary, body] = buildPayload('MyCollection', records);
+
+const result = await api.batch('$batch', body, {
+  'Content-Type': `multipart/mixed; boundary=${boundary}`,
+  'Accept': 'multipart/mixed',
+  'Prefer': 'odata.continue-on-error',
+});
+
+if (result.isOk) {
+  // result.data es el string multipart crudo de la respuesta SAP
+  console.log(result.data);
+} else {
+  console.log('Error:', result.mssg);
+}
+```
+
+> La respuesta de SAP (`result.data`) es un string `multipart/mixed` crudo que debe parsearse según las necesidades de cada caso.

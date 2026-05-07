@@ -91,6 +91,7 @@ export interface SapAPI {
   get(query: string, maxPageSize?: number): Promise<ApiResponse<unknown>>;
   post(query: string, body: unknown): Promise<ApiResponse<unknown>>;
   patch(query: string, body: unknown, replace?: boolean): Promise<ApiResponse<unknown>>;
+  batch(query: string, body: string, headers: Record<string, string>): Promise<ApiResponse<string>>;
 
   hana: {
     query(str: string): Promise<ApiResponse<unknown>>;
