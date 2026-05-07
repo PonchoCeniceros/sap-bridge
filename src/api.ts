@@ -1,6 +1,6 @@
 import hdb from "@sap/hana-client";
 import { OnSession, OnHana } from "./decorators/index.js";
-import { handleResponse, isSessionExpired } from "./utils.js";
+import { handleResponse, isSessionExpired, validateAndCleanSql } from "./utils.js";
 import { isCollection, isSingle, isSpecial } from "./guards.js";
 import type { SapSessionHandler, ApiResponse, SingleResponse, SpecialResponse } from "./types.js";
 
@@ -226,12 +226,55 @@ export class SapApi {
     }
   }
 
+  @OnSession
+  async batch(session: any, apiUrl: any, query: string, body: string, headers: Record<string, string>) {
+    process.env.NODE_NO_WARNINGS = '1';
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    try {
+      const resl = await fetch(`${apiUrl}/${query}`, {
+        method: 'POST',
+        headers: {
+          'Cookie': `B1SESSION=${session.id}; ROUTEID=${session.node}`,
+          ...headers
+        },
+        body
+      });
+
+      if (!resl.ok) {
+        const errorText = await resl.text();
+        throw new Error(`SAP API request failed with status ${resl.status}: ${errorText}`);
+      }
+
+      const raw = await resl.text();
+      return {
+        isOk: true,
+        mssg: 'batch request successful',
+        data: raw
+      } as ApiResponse<string>;
+
+    } catch (error: unknown) {
+      const baseMssg = error instanceof Error ? error.message : "Unknown error";
+      const mssg = `Failed to BATCH ${apiUrl}/${query}: ${baseMssg}`;
+      return {
+        expired: isSessionExpired(mssg),
+        isOk: false,
+        mssg
+      } as ApiResponse<string>;
+
+    } finally {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
+      process.env.NODE_NO_WARNINGS = '0';
+
+    }
+  }
+
   @OnHana
   private async _hanaQuery(params: any, query: string) {
     const { createConnection } = hdb;
     let cnxn: hdb.Connection | undefined;
 
     try {
+      const cleanedQuery = validateAndCleanSql(query);
       if (!params?.credentials) {
         throw new Error("HANA credentials are missing in params.");
       }
@@ -248,10 +291,9 @@ export class SapApi {
 
       // promise para la ejecucion de la consulta
       const resl = await new Promise<any>((resolve, reject) => {
-        cnxn!.exec(query, (err: any, rows: any) => {
+        cnxn!.exec(cleanedQuery, (err: any, rows: any) => {
           if (err) {
-            // Incluimos la query en el error para que el debug sea instantáneo
-            return reject(new Error(`HANA Exec Error: ${err.message} | Query: ${query}`));
+            return reject(new Error(`HANA Exec Error: ${err.message} | Query: ${cleanedQuery}`));
           }
           resolve(rows);
         });

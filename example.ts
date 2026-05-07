@@ -1,7 +1,11 @@
+const COLOR_RED = "\x1b[91m%s\x1b[0m";
+const COLOR_GREEN = "\x1b[92m%s\x1b[0m";
+
 import type {
   SapAPI, // Estructura de la API
   SapCredentials, // formato para las credenciales para Service Layer/HANA
   SessionHandlerOptions, // Opciones para configurar el SessionHandler
+  ApiResponse as ApiRes, // respuesta comun a toda la libreria
 } from './src/index.js';
 import {
   SapConn, // objeto que concentra/gestiona las credenciales
@@ -20,20 +24,95 @@ const api: SapAPI = SapProvider(conn, options);
  * el decorador @OnSession maneja
  * login y reintento automáticamente
  */
-const orders = await api.get('Orders?$top=5');
+console.log("\n┌─────────────────────────────┐");
+console.log("│       SERVICE LAYER         │");
+console.log("└─────────────────────────────┘");
+const orders: ApiRes<any> = await api.get('Orders?$select=DocNum,DocEntry&$top=5');
+if (orders.isOk) {
+  console.log(COLOR_GREEN, 'Órdenes:', orders.data);
+} else {
+  console.log(COLOR_RED, 'Expiracion:', orders.expired);
+  console.log(COLOR_RED, 'Error:', orders.mssg);
+}
 
 /**
  * HANA
  * consulta SQL directa
  */
-const rows = await api.hana.query(`
+console.log("\n┌─────────────────────────────┐");
+console.log("│            HANA             │");
+console.log("└─────────────────────────────┘");
+const rows: ApiRes<any> = await api.hana.query(`
   SELECT "DocNum", "CardCode", "DocTotal"
   FROM "${api.company}"."ORDR"
-  LIMIT 5
+  LIMIT 1001
 `);
+if (rows.isOk) {
+  console.log(COLOR_GREEN, 'Filas HANA:', rows.data);
+} else {
+  console.log(COLOR_RED, 'Expiracion:', rows.expired);
+  console.log(COLOR_RED, 'Error:', rows.mssg);
+}
 
 /**
+ * BATCH
  *
+ * implementacion de una funcion para crear el
+ * payload para la llamada del tipo Batch
+ *
+ * la funcion queda a criterio del desarrollado
+ * y no forma parte de la libreria
  */
-console.log('Órdenes:', orders);
-console.log('Filas HANA:', rows.data);
+function buildPayload(collection: string, itemCode: string, records: any[]): [string, string] {
+  const boundary = `batch_${Date.now()}`;
+  const parts: string[] = [];
+  records.forEach((record, idx) => {
+    const part = [
+      `--${boundary}`,
+      'Content-Type: application/http',
+      'Content-Transfer-Encoding: binary',
+      `Content-ID: ${idx + 1}`,
+      '',
+      `PATCH /b1s/v1/${collection}('${itemCode}') HTTP/1.1`,
+      'Content-Type: application/json',
+      'Accept: application/json',
+      'B1S-ReplaceCollectionsOnPatch: false',
+      '',
+      JSON.stringify(record),
+      '',
+    ].join('\r\n');
+    parts.push(part);
+  });
+  parts.push(`--${boundary}--`);
+  return [boundary, parts.join('\r\n')] as const;
+}
+
+/**
+ * implementacion del metodo batch
+ */
+console.log("\n┌─────────────────────────────┐");
+console.log("│            BATCH            │");
+console.log("└─────────────────────────────┘");
+const records: any[] = [
+  {
+    NPI1Collection: [
+      {
+        LineId: 1,
+        U_ItemCode: "101274",
+        U_SpecialPrice: 1.0740,
+      },
+    ]
+  }
+];
+const [boundary, body] = buildPayload('NPIL', 'C002377', records);
+const resl = await api.batch('$batch', body, {
+  'Content-Type': `multipart/mixed; boundary=${boundary}`,
+  'Accept': 'multipart/mixed',
+  'Prefer': 'odata.continue-on-error',
+});
+if (resl.isOk) {
+  console.log(COLOR_GREEN, 'Resultado:', resl.data);
+} else {
+  console.log(COLOR_RED, 'Expiracion:', resl.expired);
+  console.log(COLOR_RED, 'Error:', resl.mssg);
+}

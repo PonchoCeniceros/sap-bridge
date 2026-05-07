@@ -50,4 +50,31 @@ export function isSessionExpired(message: string) {
   return message.includes(expirationBanner);
 }
 
+/**
+ *
+ */
+export function validateAndCleanSql(sql: string): string {
+  const trimmed = (sql ?? '').trim();
+  if (!trimmed) {
+    throw new Error('SQL query is empty');
+  }
+  const cleaned = trimmed.replace(/^--\s*\w+\s+/i, '').trim();
+  if (/\b(update|insert|delete|drop|truncate|alter)\b/i.test(cleaned)) {
+    throw new Error('Mutations (INSERT, UPDATE, DELETE, DROP, TRUNCATE, ALTER) are forbidden in raw queries');
+  }
+  if (/^select\s+/i.test(cleaned)) {
+    const hasLimit = /\slimit\s+(\d+)/i.test(cleaned);
+    const hasTop = /^select\s+top\s+(\d+)/i.test(cleaned);
+    if (!hasLimit && !hasTop) {
+      throw new Error('SELECT statements must include TOP <n> or LIMIT <n> for performance safety');
+    }
+    const match = cleaned.match(/(?:limit|top)\s+(\d+)/i);
+    const limitValue = match?.[1] ? parseInt(match[1], 10) : 0;
+    if (limitValue > 1000 || limitValue <= 0) {
+      throw new Error('Query limit must be between 1 and 1000');
+    }
+  }
+  return cleaned;
+}
+
 /* eslint-enable @typescript-eslint/no-explicit-any */

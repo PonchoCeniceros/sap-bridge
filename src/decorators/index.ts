@@ -13,7 +13,12 @@ export function OnSession(endpoint: any, _context: ClassMethodDecoratorContext) 
     }
     let result = await endpoint.call(this, session, hdl.apiUrl, ...args);
     if (result?.expired) {
-      await hdl.cleanSession();
+      try {
+        await hdl.cleanSession();
+      } catch (error: unknown) {
+        const mssg = error instanceof Error ? error.message : "Unknown error";
+        return { isOk: false, mssg: `Failed to clean session: ${mssg}` };
+      }
       const loginResult = await hdl.login();
       if (!loginResult.isOk) return loginResult;
       const newSession = await hdl.getSession();
