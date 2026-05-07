@@ -1,6 +1,6 @@
 import hdb from "@sap/hana-client";
 import { OnSession, OnHana } from "./decorators/index.js";
-import { handleResponse, isSessionExpired } from "./utils.js";
+import { handleResponse, isSessionExpired, validateAndCleanSql } from "./utils.js";
 import { isCollection, isSingle, isSpecial } from "./guards.js";
 import type { SapSessionHandler, ApiResponse, SingleResponse, SpecialResponse } from "./types.js";
 
@@ -232,6 +232,7 @@ export class SapApi {
     let cnxn: hdb.Connection | undefined;
 
     try {
+      const cleanedQuery = validateAndCleanSql(query);
       if (!params?.credentials) {
         throw new Error("HANA credentials are missing in params.");
       }
@@ -248,10 +249,9 @@ export class SapApi {
 
       // promise para la ejecucion de la consulta
       const resl = await new Promise<any>((resolve, reject) => {
-        cnxn!.exec(query, (err: any, rows: any) => {
+        cnxn!.exec(cleanedQuery, (err: any, rows: any) => {
           if (err) {
-            // Incluimos la query en el error para que el debug sea instantáneo
-            return reject(new Error(`HANA Exec Error: ${err.message} | Query: ${query}`));
+            return reject(new Error(`HANA Exec Error: ${err.message} | Query: ${cleanedQuery}`));
           }
           resolve(rows);
         });
