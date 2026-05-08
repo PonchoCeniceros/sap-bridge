@@ -39,12 +39,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ponchoceniceros/sap.git"
+    "url": "git+https://github.com/PonchoCeniceros/sap-bridge.git"
   },
   "bugs": {
-    "url": "https://github.com/ponchoceniceros/sap/issues"
+    "url": "https://github.com/ponchoceniceros/sap-bridge/issues"
   },
-  "homepage": "https://github.com/ponchoceniceros/sap#readme",
+  "homepage": "https://github.com/ponchoceniceros/sap-bridge#readme",
   "dependencies": {
     "@sap/hana-client": "^2.27.19"
   },
