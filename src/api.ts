@@ -269,12 +269,12 @@ export class SapApi {
   }
 
   @OnHana
-  private async _hanaQuery(params: any, query: string) {
+  private async _hanaQuery(params: any, query: string, validate = true) {
     const { createConnection } = hdb;
     let cnxn: hdb.Connection | undefined;
 
     try {
-      const cleanedQuery = validateAndCleanSql(query);
+      const cleanedQuery = validate ? validateAndCleanSql(query) : query;
       if (!params?.credentials) {
         throw new Error("HANA credentials are missing in params.");
       }
@@ -328,7 +328,7 @@ export class SapApi {
   // Estructura HANA compatible con la interfaz
   get hana() {
     return {
-      query: (str: string) => this._hanaQuery(null as any, str)
+      query: (str: string, validate = true) => this._hanaQuery(null as any, str, validate)
     };
   }
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.0]
+
+### Cambiado
+- `api.hana.query()` acepta un segundo parámetro opcional `validate` (por defecto `true`) — al pasar `false` se omiten las validaciones SQL de `validateAndCleanSql()`, útil para queries avanzadas o administrativas que requieren sentencias normalmente bloqueadas
+
 ---
 
 ## [0.0.4]

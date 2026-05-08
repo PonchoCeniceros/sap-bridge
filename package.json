@@ -1,6 +1,6 @@
 {
   "name": "sap-bridge",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "Wrapper TypeScript para interactuar con SAP Service Layer y HANA",
   "type": "module",
   "main": "dist/index.js",

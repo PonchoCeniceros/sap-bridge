@@ -94,7 +94,7 @@ export interface SapAPI {
   batch(query: string, body: string, headers: Record<string, string>): Promise<ApiResponse<string>>;
 
   hana: {
-    query(str: string): Promise<ApiResponse<unknown>>;
+    query(str: string, validate?: boolean): Promise<ApiResponse<unknown>>;
   }
 }
 

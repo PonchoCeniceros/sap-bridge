@@ -46,7 +46,7 @@ const rows: ApiRes<any> = await api.hana.query(`
   SELECT "DocNum", "CardCode", "DocTotal"
   FROM "${api.company}"."ORDR"
   LIMIT 1001
-`);
+`, false);
 if (rows.isOk) {
   console.log(COLOR_GREEN, 'Filas HANA:', rows.data);
 } else {
