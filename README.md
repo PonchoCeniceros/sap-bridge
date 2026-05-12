@@ -1,4 +1,8 @@
-# SAP Bridge
+<h1 align="left">
+  <img src="https://i.postimg.cc/d32qs7f4/sap-bridge.jpg" width="90" align="absmiddle">
+  &nbsp;
+  SAP Bridge
+</h1>
 
 Este es un wrapper TypeScript para interactuar con dos sistemas SAP: el Service Layer (API OData REST de SAP Business One) y la base de datos SAP HANA.
 
